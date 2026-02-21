@@ -9,6 +9,10 @@ import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import "./auth/google.strategy.js";
 import "./auth/github.strategy.js";
+import protectedRoutes from "./routes/protected.routes.js"
+import taskRoutes from "./routes/task.routes.js";
+
+
 
 const app = express();
 
@@ -21,6 +25,8 @@ app.use(passport.initialize());
 // app.use("/api", routes);
 
 app.use("/auth", authRoutes);
+app.use("/protected", protectedRoutes);
+app.use("/tasks", taskRoutes);
 
 app.use(errorHandler);
 
