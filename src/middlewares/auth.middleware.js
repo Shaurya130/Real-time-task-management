@@ -1,20 +1,30 @@
-import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/ApiError.js";
+import { hashToken } from "../utils/tokenHash.js";
+import { redis } from "../config/redis.js";
 
-export const requireAuth = (req, _res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return next(new ApiError(401, "Unauthorized"));
-  }
-
-  const token = authHeader.split(" ")[1];
-
+export const requireAuth = async (req, res, next) => {
   try {
-    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-    req.user = payload;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      throw new ApiError(401, "Authorization header missing");
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, env.jwtAccessSecret);
+
+    const tokenHash = hashToken(token);
+
+    const blacklisted = await redis.get(`blacklist:${tokenHash}`);
+
+    if (blacklisted) {
+      throw new ApiError(401, "Token revoked");
+    }
+
+    req.user = decoded;
+
     next();
-  } catch {
-    next(new ApiError(401, "Token expired or invalid"));
+  } catch (err) {
+    next(err);
   }
 };

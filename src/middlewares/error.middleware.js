@@ -1,38 +1,41 @@
 import { Prisma } from "@prisma/client";
 import { ApiError } from "../utils/ApiError.js";
+import { logger } from "../utils/logger.js";
+import { env } from "../config/env.js";
 
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
-  // Prisma errors
+  // 🔎 Central logging
+  logger.error("Request Error", {
+    path: req.originalUrl,
+    method: req.method,
+    message: err.message,
+    stack: err.stack,
+  });
+
+  // 🔵 Prisma Known Errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    // Unique constraint failed
     if (err.code === "P2002") {
       error = new ApiError(
         409,
         `Duplicate value for ${err.meta?.target?.join(", ")}`
       );
-    }
-
-    // Record not found
-    else if (err.code === "P2025") {
+    } else if (err.code === "P2025") {
       error = new ApiError(404, "Record not found");
     }
   }
 
-  // pg (node-postgres) errors
+  // 🟣 PostgreSQL Errors
   else if (err.code && err.code.startsWith("23")) {
-    // 23505 → unique_violation
     if (err.code === "23505") {
       error = new ApiError(409, "Duplicate value violates unique constraint");
-    }
-    // 23503 → foreign_key_violation
-    else if (err.code === "23503") {
+    } else if (err.code === "23503") {
       error = new ApiError(400, "Invalid foreign key reference");
     }
   }
 
-  // Unknown / non-ApiError
+  // 🔴 Wrap Unknown Errors
   if (!(error instanceof ApiError)) {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -40,15 +43,20 @@ const errorHandler = (err, req, res, next) => {
     error = new ApiError(statusCode, message);
   }
 
-  const response = {
+  return res.status(error.statusCode).json({
     success: false,
-    message: error.message,
-    ...(process.env.NODE_ENV === "development" && {
-      stack: error.stack,
-    }),
-  };
-
-  return res.status(error.statusCode).json(response);
+    error: {
+      code:
+        error.statusCode === 400 && error.errors?.length
+          ? "VALIDATION_ERROR"
+          : error.statusCode === 500
+          ? "INTERNAL_ERROR"
+          : "REQUEST_ERROR",
+      message: error.message,
+      ...(error.errors?.length && { details: error.errors }),
+      ...(env.nodeEnv === "development" && { stack: error.stack }),
+    },
+  });
 };
 
 export { errorHandler };

@@ -17,6 +17,8 @@ model User {
   provider   AuthProvider
   providerId String
 
+  auditLogs AuditLog[]
+
   tasks Task[]
 
   createdAt DateTime @default(now())
@@ -35,6 +37,10 @@ model Task {
 
   assigneeId String?
   assignee   User?   @relation(fields: [assigneeId], references: [id])
+
+  @@index([assigneeId])                // filter
+  @@index([createdAt])                 // sorting
+  @@index([assigneeId, createdAt])     // 🔥 most important
 }
 
 enum Role {
@@ -51,4 +57,23 @@ enum TaskStatus {
 enum AuthProvider {
   GOOGLE
   GITHUB
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
 }

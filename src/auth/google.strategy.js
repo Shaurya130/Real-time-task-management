@@ -1,12 +1,13 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { prisma } from "../config/prisma.js";
+import { env } from "../config/env.js";
 
 passport.use(
   new GoogleStrategy(   // Google OAuth2 strategy
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: env.googleClientId,
+      clientSecret: env.googleClientSecret,
       callbackURL: "/auth/google/callback",
     },
     async (_accessToken, _refreshToken, profile, done) => {

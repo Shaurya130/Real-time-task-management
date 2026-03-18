@@ -1,12 +1,13 @@
 import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { prisma } from "../config/prisma.js";
+import { env } from "../config/env.js";
 
 passport.use(
   new GitHubStrategy(
     {
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientID: env.githubClientId,
+      clientSecret: env.githubClientSecret,
       callbackURL: "/auth/github/callback",
     },
     async (_accessToken, _refreshToken, profile, done) => {

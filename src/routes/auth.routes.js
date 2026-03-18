@@ -1,143 +1,159 @@
 import { Router } from "express";
 import passport from "passport";
+import jwt from "jsonwebtoken";
+
 import { signAccessToken, signRefreshToken } from "../utils/jwt.js";
 import { redis } from "../config/redis.js";
-import jwt from "jsonwebtoken";
+import { prisma } from "../config/prisma.js";
+import { env } from "../config/env.js";
+
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
+import { authLimiter } from "../config/rateLimit.js";
+import { hashToken } from "../utils/tokenHash.js";
 
 const router = Router();
 
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+router.use(authLimiter);
 
-router.get(
-  "/google/callback",
+
+router.get("/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+router.get("/google/callback",
   passport.authenticate("google", {
     session: false,
     failureRedirect: "/auth/failed",
   }),
-  async(req, res) => {
-    const user = req.user;
+  async (req, res, next) => {
+    try {
+      const user = req.user;
 
-    const accessToken = signAccessToken({
-      userId: user.id,
-      role: user.role,
-    });
+      const accessToken = signAccessToken(user);
+      const refreshToken = signRefreshToken({ userId: user.id });
 
-    const refreshToken = signRefreshToken({
-      userId: user.id,
-    });
+      await redis.set(
+        `refresh:${user.id}`,
+        refreshToken,
+        "EX",
+        7 * 24 * 60 * 60
+      );
 
-    const refreshKey = `refresh:${user.id}`;
+      return res.status(200).json(
+        new ApiResponse(
+          { accessToken, refreshToken, user },
+          "Google OAuth success"
+        )
+      );
 
-await redis.set(
-  refreshKey,
-  refreshToken,
-  "EX",
-  7 * 24 * 60 * 60 // 7 days
-);
-
-    res.json({
-      success: true,
-      message: "Google OAuth success",
-      accessToken,
-      refreshToken,
-      user,
-    });
+    } catch (err) {
+      next(err);
+    }
   }
 );
 
 
-router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
+router.get( "/github",
+  passport.authenticate("github", { scope: ["user:email"] })
+);
 
-router.get(
-  "/github/callback",
+router.get("/github/callback",
   passport.authenticate("github", {
     session: false,
     failureRedirect: "/auth/failed",
   }),
-  async (req, res) => {
-    const user = req.user;
+  async (req, res, next) => {
+    try {
+      const user = req.user;
 
-    const accessToken = signAccessToken({
-      userId: user.id,
-      role: user.role,
-    });
+      const accessToken = signAccessToken(user);
+      const refreshToken = signRefreshToken({ userId: user.id });
 
-    const refreshToken = signRefreshToken({
-      userId: user.id,
-    });
+      await redis.set(
+        `refresh:${user.id}`,
+        refreshToken,
+        "EX",
+        7 * 24 * 60 * 60
+      );
 
-    const refreshKey = `refresh:${user.id}`;
+      return res.status(200).json(
+        new ApiResponse(
+          { accessToken, refreshToken, user },
+          "GitHub OAuth success"
+        )
+      );
 
-await redis.set(
-  refreshKey,
-  refreshToken,
-  "EX",
-  7 * 24 * 60 * 60 // 7 days
-);
-
-    res.json({
-      success: true,
-      message: "GitHub OAuth success",
-      accessToken,
-      refreshToken,
-      user,
-    });
+    } catch (err) {
+      next(err);
+    }
   }
 );
 
 
-router.get("/failed", (req, res) => {
-  res.status(401).json({
-    success: false,
-    message: "OAuth authentication failed",
-  });
+router.get("/failed", (req, res, next) => {
+  next(new ApiError(401, "OAuth authentication failed"));
 });
 
+
 router.post("/refresh", async (req, res, next) => {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    return next(new ApiError(401, "Refresh token required"));
-  }
-
   try {
-    const payload = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      throw new ApiError(401, "Refresh token required");
+    }
+
+    const payload = jwt.verify(refreshToken, env.jwtRefreshSecret);
 
     const key = `refresh:${payload.userId}`;
     const storedToken = await redis.get(key);
 
     if (!storedToken || storedToken !== refreshToken) {
-      return next(new ApiError(401, "Invalid refresh token"));
+      throw new ApiError(401, "Invalid refresh token");
     }
 
-    const newAccessToken = signAccessToken({
-      userId: payload.userId,
-      role: payload.role,
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
     });
 
-    res.json({
-      success: true,
-      accessToken: newAccessToken,
-    });
-  } catch {
-    next(new ApiError(401, "Refresh token expired"));
+    if (!user) {
+      throw new ApiError(401, "User not found");
+    }
+
+    const newAccessToken = signAccessToken(user);
+
+    return res.status(200).json(
+      new ApiResponse(
+        { accessToken: newAccessToken },
+        "Access token refreshed"
+      )
+    );
+
+  } catch (err) {
+    next(new ApiError(401, "Refresh token expired or invalid"));
   }
 });
 
+
 router.post("/logout", requireAuth, async (req, res) => {
-  const key = `refresh:${req.user.userId}`;
-  await redis.del(key);
+  const refreshKey = `refresh:${req.user.userId}`;
+
+  await redis.del(refreshKey);
+
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (token) {
+    const tokenHash = hashToken(token);
+
+    await redis.set(`blacklist:${tokenHash}`, "1", "EX", 900);
+  }
 
   res.json({
     success: true,
     message: "Logged out successfully",
   });
 });
-
 
 export default router;

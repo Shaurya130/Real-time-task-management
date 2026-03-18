@@ -5,6 +5,8 @@ import { env } from "./config/env.js";
 import { initSocket } from "./sockets/index.js";
 import { connectDB } from "./config/database.js";
 import { prisma } from "./config/prisma.js";
+import { logger } from "./utils/logger.js";
+
 
 const startServer = async () => {
   try {
@@ -12,14 +14,14 @@ const startServer = async () => {
     // await connectRedis();
 
     const server = http.createServer(app);
-    initSocket(server);
+    await initSocket(server);
 
     server.listen(env.port, () => {
-      console.log(`Server running on port ${env.port}`);
+      logger.info(`Server running on port ${env.port}`);
     });
 
   } catch (err) {
-    console.error("Startup failed:", err);
+    logger.error("Startup failed:", err);
     process.exit(1);
   }
 };

@@ -1,12 +1,13 @@
+import { logger } from "../utils/logger.js";
 import { prisma } from "./prisma.js";
 
 export const connectDB = async () => {
   try {
     // Lightweight health check
     await prisma.$queryRaw`SELECT 1`;
-    console.log(" Prisma connected to PostgreSQL");
+    logger.info(" Prisma connected to PostgreSQL");
   } catch (error) {
-    console.error(" Database connection failed", error);
+    logger.error(" Database connection failed", error);
     process.exit(1);
   }
 };

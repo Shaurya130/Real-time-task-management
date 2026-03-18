@@ -1,5 +1,6 @@
 import Redis from "ioredis";
 import { env } from "./env.js";
+import { logger } from "../utils/logger.js";
 
 export const redis = new Redis({
   host: env.redisHost,
@@ -11,13 +12,13 @@ export const redis = new Redis({
 });
 
 redis.on("connect", () => {
-  console.log("Redis connected");
+  logger.info("Redis connected");
 });
 
 redis.on("error", (err) => {
-  console.error("Redis error", err);
+  logger.error("Redis error", err);
 });
 
 redis.on("ready", () => {
-  console.log("Redis ready to use");
+  logger.info("Redis ready to use");
 });

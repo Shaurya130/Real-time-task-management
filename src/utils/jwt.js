@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
 
 export const signAccessToken = (user) => {
   return jwt.sign(
@@ -6,15 +7,15 @@ export const signAccessToken = (user) => {
       userId: user.id,
       role: user.role,
     },
-    process.env.JWT_ACCESS_SECRET,
+    env.jwtSecret,
     {
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+      expiresIn: env.accessExpiry,
     }
   );
 };
 
 export const signRefreshToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  return jwt.sign(payload, env.jwtRefreshSecret, {
+    expiresIn: env.refreshExpiry,
   });
 };

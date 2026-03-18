@@ -1,5 +1,13 @@
 import { Router } from "express";
 import { requireAuth } from "../middlewares/auth.middleware.js";
+ import {requireRole} from "../middlewares/requireRole.js";  
+import { validate } from "../middlewares/validate.middleware.js";
+
+import { createTaskSchema,
+   updateTaskSchema, 
+   assignTaskSchema } 
+   from "../validations/task.validation.js";   //invalid data never reaches controller
+
 import {
   createTask,
   getMyTasks,
@@ -7,19 +15,21 @@ import {
   deleteTask,
   assignTask,
 } from "../controllers/task.controller.js";
- import {requireRole} from "../middlewares/requireRole.js";  
+
+
 
 const router = Router();
 
-router.post("/", requireAuth, createTask);
+router.post("/", requireAuth, validate(createTaskSchema), createTask);
 router.get("/", requireAuth, getMyTasks);
-router.patch("/:id", requireAuth, updateTask);
+router.patch("/:id", requireAuth, validate(updateTaskSchema), updateTask);
 router.delete("/:id", requireAuth, deleteTask);
 
 router.patch(
   "/:id/assign",
   requireAuth,
   requireRole("ADMIN"),
+  validate(assignTaskSchema),
   assignTask
 );
 
