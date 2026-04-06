@@ -15,13 +15,14 @@ import {
   deleteTask,
   assignTask,
 } from "../controllers/task.controller.js";
+import { rateLimiter } from "../middlewares/rateLimiter.js";
 
 
 
 const router = Router();
 
 router.post("/", requireAuth, validate(createTaskSchema), createTask);
-router.get("/", requireAuth, getMyTasks);
+router.get("/", requireAuth, rateLimiter({ windowSize: 60, maxRequests: 50 }),getMyTasks);
 router.patch("/:id", requireAuth, validate(updateTaskSchema), updateTask);
 router.delete("/:id", requireAuth, deleteTask);
 

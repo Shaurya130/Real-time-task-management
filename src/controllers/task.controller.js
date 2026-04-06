@@ -5,7 +5,12 @@ import { getIO } from "../sockets/index.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-
+const invalidateUserTaskCache = async (userId) => {
+  const keys = await redis.keys(`tasks:user:${userId}:*`);
+  if (keys.length) {
+    await redis.del(keys);
+  }
+};
 
 export const createTask = async (req, res, next) => {
   try {
@@ -19,7 +24,7 @@ export const createTask = async (req, res, next) => {
       },
     });
 
-    await redis.del(`tasks:${req.user.userId}`);
+    await invalidateUserTaskCache(req.user.userId);
 
     await logAuditEvent({
       userId: req.user.userId,
@@ -48,24 +53,24 @@ export const createTask = async (req, res, next) => {
 export const getMyTasks = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const cacheKey = `tasks:${userId}`;
+    const { page = 1, limit = 10 } = req.query;
+
+    const cacheKey = `tasks:user:${userId}:page:${page}:limit:${limit}`;
 
     const cached = await redis.get(cacheKey);
-
-    //if cache hit, return cached data
     if (cached) {
       return res.json(
         new ApiResponse(JSON.parse(cached), "Tasks fetched from cache")
       );
     }
 
-    // Fetch from DB
     const tasks = await prisma.task.findMany({
       where: { assigneeId: userId },
       orderBy: { createdAt: "desc" },
+      skip: (page - 1) * Number(limit),
+      take: Number(limit),
     });
 
-    //Store in Redis with TTL
     await redis.set(cacheKey, JSON.stringify(tasks), "EX", 60);
 
     return res.json(
@@ -111,7 +116,7 @@ export const updateTask = async (req, res, next) => {
       data,
     });
 
-    await redis.del(`tasks:${updated.assigneeId}`);
+    await invalidateUserTaskCache(updated.assigneeId);
 
     await logAuditEvent({
       userId: req.user.userId,
@@ -163,7 +168,7 @@ export const deleteTask = async (req, res, next) => {
 
     await prisma.task.delete({ where: { id } });
 
-    await redis.del(`tasks:${task.assigneeId}`);
+    await invalidateUserTaskCache(task.assigneeId);
 
     await logAuditEvent({
       userId: req.user.userId,
@@ -209,6 +214,11 @@ export const assignTask = async (req, res, next) => {
       where: { id },
       data: { assigneeId: userId },
     });
+
+    await Promise.all([
+      invalidateUserTaskCache(oldAssignee),
+      invalidateUserTaskCache(userId),
+    ]);
 
     await logAuditEvent({
       userId: req.user.userId,

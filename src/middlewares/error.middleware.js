@@ -3,18 +3,19 @@ import { ApiError } from "../utils/ApiError.js";
 import { logger } from "../utils/logger.js";
 import { env } from "../config/env.js";
 
+
+
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
-  // 🔎 Central logging
   logger.error("Request Error", {
+    requestId: req.id,
     path: req.originalUrl,
     method: req.method,
     message: err.message,
     stack: err.stack,
   });
 
-  // 🔵 Prisma Known Errors
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2002") {
       error = new ApiError(
@@ -24,10 +25,7 @@ const errorHandler = (err, req, res, next) => {
     } else if (err.code === "P2025") {
       error = new ApiError(404, "Record not found");
     }
-  }
-
-  // 🟣 PostgreSQL Errors
-  else if (err.code && err.code.startsWith("23")) {
+  } else if (err.code && err.code.startsWith("23")) {
     if (err.code === "23505") {
       error = new ApiError(409, "Duplicate value violates unique constraint");
     } else if (err.code === "23503") {
@@ -35,7 +33,6 @@ const errorHandler = (err, req, res, next) => {
     }
   }
 
-  // 🔴 Wrap Unknown Errors
   if (!(error instanceof ApiError)) {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -56,6 +53,7 @@ const errorHandler = (err, req, res, next) => {
       ...(error.errors?.length && { details: error.errors }),
       ...(env.nodeEnv === "development" && { stack: error.stack }),
     },
+    requestId: req.id, // 🔥 IMPORTANT
   });
 };
 

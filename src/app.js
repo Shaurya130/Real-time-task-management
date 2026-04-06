@@ -12,7 +12,13 @@ import "./auth/github.strategy.js";
 import protectedRoutes from "./routes/protected.routes.js"
 import taskRoutes from "./routes/task.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import healthRoutes from "./routes/health.routes.js";
+
+
+
 import { env } from "./config/env.js";
+import { requestIdMiddleware } from "./middlewares/requestId.js";
+import { requestLogger } from "./middlewares/requestLogger.js";
 
 
 
@@ -41,6 +47,10 @@ app.use(
 
 app.set("trust proxy", 1);
 app.use(express.json());
+
+app.use(requestIdMiddleware);
+app.use(requestLogger);
+
 app.use(morgan("dev"));
 app.use(passport.initialize());
 app.disable("x-powered-by"); // Security best practice: hide Express signature
@@ -53,7 +63,7 @@ app.use("/auth", authRoutes);
 app.use("/protected", protectedRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/admin", adminRoutes);
-
+app.use("/", healthRoutes);
 app.use(errorHandler);
 
 export default app;

@@ -1,5 +1,8 @@
 import { hashToken } from "../utils/tokenHash.js";
 import { redis } from "../config/redis.js";
+import { ApiError } from "../utils/ApiError.js";
+import  jwt  from "jsonwebtoken";
+import { env } from "../config/env.js";
 
 export const requireAuth = async (req, res, next) => {
   try {
@@ -11,8 +14,6 @@ export const requireAuth = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, env.jwtAccessSecret);
-
     const tokenHash = hashToken(token);
 
     const blacklisted = await redis.get(`blacklist:${tokenHash}`);
@@ -20,6 +21,8 @@ export const requireAuth = async (req, res, next) => {
     if (blacklisted) {
       throw new ApiError(401, "Token revoked");
     }
+
+    const decoded = jwt.verify(token, env.jwtSecret);
 
     req.user = decoded;
 

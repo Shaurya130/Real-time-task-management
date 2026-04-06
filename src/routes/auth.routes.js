@@ -136,18 +136,22 @@ router.post("/refresh", async (req, res, next) => {
   }
 });
 
-
 router.post("/logout", requireAuth, async (req, res) => {
   const refreshKey = `refresh:${req.user.userId}`;
-
   await redis.del(refreshKey);
 
   const token = req.headers.authorization?.split(" ")[1];
 
   if (token) {
-    const tokenHash = hashToken(token);
+    const decoded = jwt.decode(token);
 
-    await redis.set(`blacklist:${tokenHash}`, "1", "EX", 900);
+    const expiry = decoded.exp - Math.floor(Date.now() / 1000);
+
+    if (expiry > 0) {
+      const tokenHash = hashToken(token);
+
+      await redis.set(`blacklist:${tokenHash}`, "1", "EX", expiry);
+    }
   }
 
   res.json({
