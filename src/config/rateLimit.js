@@ -1,20 +1,21 @@
-
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import { redis } from "../config/redis.js";
 
-export const authLimiter = rateLimit({
-  store: new RedisStore({
-    sendCommand: (...args) => redis.call(...args),
-  }),
+const redisStore = new RedisStore({
+  sendCommand: (...args) => redis.call(...args),
+});
 
-  windowMs: 15 * 60 * 1000, // 15 mins
+export const authLimiter = rateLimit({
+  store: redisStore,
+
+  windowMs: 15 * 60 * 1000,
   max: 20,
 
   keyGenerator: (req) => {
-  if (req.user?.userId) return `user:${req.user.userId}`;
-  return `ip:${req.ip}`;
-},
+    if (req.user?.userId) return `user:${req.user.userId}`;
+    return `ip:${ipKeyGenerator(req)}`; // 🔥 FIXED
+  },
 
   message: {
     success: false,
@@ -28,18 +29,17 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+
 export const apiLimiter = rateLimit({
-  store: new RedisStore({
-    sendCommand: (...args) => redis.call(...args),
-  }),
+  store: redisStore,
 
   windowMs: 15 * 60 * 1000,
   max: 100,
 
- keyGenerator: (req) => {
-  if (req.user?.userId) return `user:${req.user.userId}`;
-  return `ip:${req.ip}`;
-},
+  keyGenerator: (req) => {
+    if (req.user?.userId) return `user:${req.user.userId}`;
+    return `ip:${ipKeyGenerator(req)}`; // 🔥 FIXED
+  },
 
   message: {
     success: false,
