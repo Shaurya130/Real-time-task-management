@@ -14,8 +14,8 @@ services:
       PORT: 5000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/realtime_tasks
       REDIS_URL: redis://redis:6379
-      JWT_ACCESS_SECRET: secret
-      JWT_REFRESH_SECRET: secret
+      JWT_ACCESS_SECRET: super_secret_access_key
+      JWT_REFRESH_SECRET: super_secret_refresh_key
     command: >
       sh -c "
       until pg_isready -h postgres -p 5432; do
@@ -35,8 +35,8 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/realtime_tasks
       REDIS_URL: redis://redis:6379
-      JWT_ACCESS_SECRET: secret
-      JWT_REFRESH_SECRET: secret
+      JWT_ACCESS_SECRET: super_secret_access_key
+      JWT_REFRESH_SECRET: super_secret_refresh_key
     command: >
       sh -c "
       until pg_isready -h postgres -p 5432; do
@@ -56,7 +56,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: strongpassword123
       POSTGRES_DB: realtime_tasks
     volumes:
       - postgres_data:/var/lib/postgresql/data
