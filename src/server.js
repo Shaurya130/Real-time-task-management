@@ -11,12 +11,11 @@ import { logger } from "./utils/logger.js";
 const startServer = async () => {
   try {
     await connectDB();
-    // await connectRedis();
 
     const server = http.createServer(app);
     await initSocket(server);
 
-    server.listen(env.port, () => {
+    server.listen(env.port, "0.0.0.0", () => {
       logger.info(`Server running on port ${env.port}`);
     });
 
