@@ -10,12 +10,8 @@ services:
     restart: always
     ports:
       - "5000:5000"
-    environment:
-      PORT: 5000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/realtime_tasks
-      REDIS_URL: redis://redis:6379
-      JWT_ACCESS_SECRET: super_secret_access_key
-      JWT_REFRESH_SECRET: super_secret_refresh_key
+    env_file:
+      - .env
     command: >
       sh -c "
       until pg_isready -h postgres -p 5432; do
@@ -24,7 +20,7 @@ services:
       done;
       npx prisma migrate deploy;
       node src/server.js
-      " 
+      "
 
   worker:
     build: .
@@ -32,11 +28,8 @@ services:
       - postgres
       - redis
     restart: always
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/realtime_tasks
-      REDIS_URL: redis://redis:6379
-      JWT_ACCESS_SECRET: super_secret_access_key
-      JWT_REFRESH_SECRET: super_secret_refresh_key
+    env_file:
+      - .env
     command: >
       sh -c "
       until pg_isready -h postgres -p 5432; do
@@ -45,6 +38,7 @@ services:
       done;
       node src/workers/audit.workers.js
       "
+
   redis:
     image: redis:7
     restart: always
@@ -54,10 +48,8 @@ services:
   postgres:
     image: postgres:15
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: strongpassword123
-      POSTGRES_DB: realtime_tasks
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
