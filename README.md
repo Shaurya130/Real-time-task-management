@@ -1,211 +1,368 @@
 # 🚀 Real-Time Task Management Backend
 
-A production-style backend system designed to go beyond CRUD and demonstrate real-world backend architecture, scalability patterns, and distributed system concepts.
+Production-grade backend API with realtime infrastructure, Redis queues, Dockerized deployment, Swagger documentation, HTTPS reverse proxying, and automated CI/CD.
+
+![Node.js](https://img.shields.io/badge/Node.js-20-green)
+![Express](https://img.shields.io/badge/Express.js-Backend-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue)
+![Redis](https://img.shields.io/badge/Redis-Queue-red)
+![Docker](https://img.shields.io/badge/Docker-Containerization-blue)
+![NGINX](https://img.shields.io/badge/NGINX-Reverse%20Proxy-green)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI%2FCD-black)
+![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-green)
 
 ---
 
-## 🧠 Overview
+# 🌐 Live Production API
 
-This project focuses on **how systems behave**, not just what they do.
-
-It implements a real-time task management backend with:
-
-- Secure authentication
-- Role-based authorization
-- Real-time updates
-- Asynchronous job processing
-- Redis-powered scalability
-- Production-grade architecture patterns
-
----
-
-## 🏗 System Architecture
-
-![System Design](./assets/system-design.png)
-
-> High-level architecture showing API layer, Redis (multi-role), worker system, and realtime communication.
-
----
-
-## ⚙️ Tech Stack
-
-### Backend
-- Node.js
-- Express.js
-- PostgreSQL
-- Prisma ORM
-
-### Authentication & Security
-- OAuth 2.0 (Google + GitHub)
-- JWT (Access + Refresh Tokens)
-- Redis-based session storage
-- Token blacklist (revocation)
-
-### Realtime
-- Socket.IO
-- Authenticated WebSocket connections
-- User rooms & admin channels
-- Redis Pub/Sub adapter
-
-### Distributed Systems
-- Redis (multi-purpose usage)
-- BullMQ (background jobs)
-- Worker architecture
-
----
-
-## 🔐 Authentication Flow
-
-- OAuth login via Google/GitHub
-- Access Token (short-lived, stateless)
-- Refresh Token (stored in Redis)
-- Logout invalidates session + blacklists access token
-
----
-
-## 🛡 Authorization
-
-- Role-Based Access Control (RBAC)
-- Resource-level ownership checks
-- Admin override capabilities
-
----
-
-## ⚡ Features
-
-### Task Management
-- Create, update, delete tasks
-- Assign tasks to users
-- Ownership + admin controls
-
-### Real-Time Updates
-- Task creation, updates, deletion events
-- User-scoped socket rooms
-- Admin broadcast channel
-
-### Audit Logging (Async)
-- All actions logged via BullMQ
-- Worker processes jobs independently
-- Retry + failure handling
-
----
-
-## 🔴 Redis Usage (Core Highlight)
-
-Redis is used as a **central system layer**:
-
-- 🔑 Refresh token storage
-- 🚫 Access token blacklist
-- ⚡ Socket.IO Pub/Sub (multi-instance scaling)
-- 📦 BullMQ job queue
-- ⚡ Task caching layer
-
----
-
-## 🧱 Architecture Highlights
-
-- Stateless API design
-- Shared state via Redis
-- Separation of sync vs async processing
-- Event-driven realtime system
-- Horizontally scalable design
-
----
-
-## 🗄 Database Design
-
-- PostgreSQL with Prisma ORM
-- Proper relational modeling
-- Indexed queries for performance:
-  - `(assigneeId, createdAt)`
-  - Audit log filters (userId, action, etc.)
-
----
-
-## 📡 API Endpoints (Sample)
-
-```http
-POST /auth/google
-POST /auth/github
-POST /auth/refresh
-POST /auth/logout
-
-GET /tasks
-POST /tasks
-PATCH /tasks/:id
-DELETE /tasks/:id
-PATCH /tasks/:id/assign
-```
-
----
-
-## 🔄 Async Processing (BullMQ)
-
-`API → Redis Queue → Worker → Database`
-
-
-- Non-blocking request handling
-- Retry + backoff strategy
-- Scalable worker architecture
-
----
-
-## ⚡ Realtime Flow
-
-`API emits event → Redis Pub/Sub → All servers → Clients receive update`
-
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repo
+### API Base URL
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+https://api.iamshaurya.me
 ```
 
-### 2. Install dependencies
+### Swagger Documentation
+
 ```bash
-npm install
+https://api.iamshaurya.me/api-docs
 ```
 
-### 3. Create .env
+---
+
+# 📖 Overview
+
+This project is a production-grade backend system for realtime task management built with Node.js, Express, Prisma, PostgreSQL, Redis, and BullMQ.
+
+The system focuses not only on CRUD functionality, but also on backend infrastructure engineering concepts such as:
+
+* Dockerized deployments
+* Queue-based background workers
+* Reverse proxy architecture
+* HTTPS + SSL setup
+* Automated CI/CD deployment
+* Redis-based rate limiting
+* JWT authentication
+* OAuth authentication
+* Swagger/OpenAPI documentation
+* Cloud VM deployment
+
+The backend is deployed on an Azure Virtual Machine using Docker Compose and automated through GitHub Actions CI/CD.
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication & Security
+
+* JWT Access & Refresh Tokens
+* Google OAuth Authentication
+* GitHub OAuth Authentication
+* Role-Based Access Control (RBAC)
+* Redis Token Blacklisting
+* Helmet Security Middleware
+* CORS Protection
+* Request Logging & Request IDs
+* Redis-Based Rate Limiting
+
+---
+
+## 📋 Task Management
+
+* Create Tasks
+* Update Tasks
+* Delete Tasks
+* Assign Tasks
+* Admin Role Management
+* Protected Routes
+
+---
+
+## ⚡ Realtime & Background Processing
+
+* Redis Queue Infrastructure
+* BullMQ Worker Architecture
+* Async Audit Logging
+* Background Workers
+
+---
+
+## ☁️ DevOps & Infrastructure
+
+* Dockerized Backend Services
+* Docker Compose Orchestration
+* NGINX Reverse Proxy
+* HTTPS SSL Configuration
+* Custom Domain Setup
+* Azure VM Deployment
+* Automated GitHub Actions CI/CD
+
+---
+
+## 📚 API Documentation
+
+* Swagger/OpenAPI Documentation
+* Interactive API Testing
+* Bearer Authentication Support
+* Request/Response Schemas
+
+---
+
+# 🏗️ System Architecture
+
+```text
+                ┌────────────────────┐
+                │      Client        │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │       NGINX        │
+                │ Reverse Proxy + SSL│
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │    Express API     │
+                │   Node.js Server   │
+                └──────┬─────┬───────┘
+                       │     │
+         ┌─────────────┘     └─────────────┐
+         ▼                                 ▼
+┌──────────────────┐            ┌──────────────────┐
+│    PostgreSQL    │            │      Redis       │
+│    Prisma ORM    │            │ Queue + Caching  │
+└──────────────────┘            └────────┬─────────┘
+                                         │
+                                         ▼
+                               ┌──────────────────┐
+                               │  BullMQ Workers  │
+                               │ Background Jobs  │
+                               └──────────────────┘
+```
+
+---
+
+# 🛠️ Tech Stack
+
+| Category       | Technologies               |
+| -------------- | -------------------------- |
+| Backend        | Node.js, Express.js        |
+| Database       | PostgreSQL                 |
+| ORM            | Prisma                     |
+| Queue System   | Redis, BullMQ              |
+| Authentication | JWT, Passport.js           |
+| OAuth          | Google OAuth, GitHub OAuth |
+| Documentation  | Swagger/OpenAPI            |
+| Reverse Proxy  | NGINX                      |
+| Deployment     | Docker, Docker Compose     |
+| CI/CD          | GitHub Actions             |
+| Cloud Hosting  | Microsoft Azure VM         |
+
+---
+
+# 🔑 Environment Variables
+
+Create a `.env` file in the root directory:
 
 ```env
-DATABASE_URL=your_postgres_url
-REDIS_URL=redis://localhost:6379
+PORT=5000
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/realtime_tasks
+NODE_ENV=development
 
-JWT_ACCESS_SECRET=your_secret
-JWT_REFRESH_SECRET=your_secret
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
+CORS_ORIGIN=http://localhost:5000
+REDIS_URL=redis://redis:6379
 
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=realtime_tasks
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
 
-### 4. Run database migrations
+---
+
+# 🐳 Running Locally With Docker
+
+## 1️⃣ Clone Repository
 
 ```bash
-npx prisma migrate dev
+git clone https://github.com/Shaurya130/Real-time-task-management.git
+cd Real-time-task-management
 ```
 
-### 5. Start services
+---
 
-#### API Server
+## 2️⃣ Start Containers
+
 ```bash
-npm run dev
+docker-compose up -d --build
 ```
 
-#### Worker
+---
+
+## 3️⃣ Verify Running Containers
+
 ```bash
-npm run worker
+docker ps
 ```
 
+---
 
+## 4️⃣ Access API
 
+```bash
+http://localhost:5000
+```
 
+---
 
+## 5️⃣ Access Swagger Docs
+
+```bash
+http://localhost:5000/api-docs
+```
+
+---
+
+# 📚 Swagger API Documentation
+
+Swagger/OpenAPI documentation is fully integrated for:
+
+* Route documentation
+* Request schemas
+* Response schemas
+* JWT Authentication
+* Interactive API testing
+
+### Production Swagger URL
+
+```bash
+https://api.iamshaurya.me/api-docs
+```
+
+---
+
+# 🔄 CI/CD Pipeline
+
+This project uses GitHub Actions for automated production deployment.
+
+### Deployment Flow
+
+```text
+Developer Pushes Code
+          ↓
+GitHub Actions Workflow Starts
+          ↓
+SSH Into Azure VM
+          ↓
+Pull Latest Repository
+          ↓
+Docker Compose Rebuild
+          ↓
+Production Deployment Updated
+```
+
+### CI/CD Features
+
+* Automated Production Deployment
+* Secure SSH Authentication
+* Docker-Based Deployment
+* GitHub Secrets Management
+* Zero Manual Deployment Required
+
+---
+
+# 🔒 Production Infrastructure
+
+### Infrastructure Highlights
+
+* Azure Virtual Machine Hosting
+* NGINX Reverse Proxy
+* HTTPS SSL Encryption
+* Dockerized Services
+* Persistent PostgreSQL Volumes
+* Redis Queue Infrastructure
+* Background Workers
+* GitHub Actions Deployment Automation
+
+---
+
+# 📸 Screenshots
+
+## Swagger Documentation
+
+![Swagger UI](./assets/Swagger.png)
+
+---
+
+## GitHub Actions CI/CD
+
+![GitHub Actions](./assets/GitHUB%20Actions.png)
+
+---
+
+# 📂 Project Structure
+
+```text
+src/
+├── auth/
+├── config/
+├── controllers/
+├── docs/
+├── middlewares/
+├── routes/
+├── sockets/
+├── utils/
+├── validations/
+├── workers/
+└── server.js
+```
+
+---
+
+# 🚀 Future Improvements
+
+* WebSocket Realtime Updates
+* Email Notifications
+* Frontend Dashboard
+* Task Analytics
+* Kubernetes Deployment
+* Monitoring & Observability
+* Unit & Integration Testing
+
+---
+
+# 👨‍💻 Author
+
+### Shaurya Awasthi
+
+* Backend Developer
+* Node.js | Express | Prisma | PostgreSQL | Redis
+* Interested in Backend Infrastructure & Cloud Engineering
+
+### Portfolio
+
+```bash
+https://iamshaurya.me
+```
+
+### GitHub
+
+```bash
+https://github.com/Shaurya130
+```
+
+---
+
+# ⭐ Support
+
+If you found this project useful, consider giving it a star on GitHub.
