@@ -96,7 +96,29 @@ router.get("/failed", (req, res, next) => {
   next(new ApiError(401, "OAuth authentication failed"));
 });
 
-
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Access token refreshed
+ *       401:
+ *         description: Invalid refresh token
+ */
 router.post("/refresh", async (req, res, next) => {
   try {
     const { refreshToken } = req.body;
@@ -136,6 +158,18 @@ router.post("/refresh", async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
 router.post("/logout", requireAuth, async (req, res) => {
   const refreshKey = `refresh:${req.user.userId}`;
   await redis.del(refreshKey);

@@ -7,6 +7,21 @@ import { auditQuerySchema } from "../validations/audit.validation.js";
 
 const router = express.Router();
 
+
+/**
+ * @swagger
+ * /admin/audit-logs:
+ *   get:
+ *     summary: Get audit logs (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Audit logs fetched successfully
+ *       403:
+ *         description: Forbidden
+ */
 router.get(
   "/audit-logs",
   requireAuth,

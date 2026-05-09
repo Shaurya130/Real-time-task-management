@@ -13,7 +13,7 @@ import protectedRoutes from "./routes/protected.routes.js"
 import taskRoutes from "./routes/task.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import healthRoutes from "./routes/health.routes.js";
-
+import { swaggerUi, swaggerSpec } from "./docs/swagger.js";
 
 
 import { env } from "./config/env.js";
@@ -57,6 +57,8 @@ app.disable("x-powered-by"); // Security best practice: hide Express signature
 
 
 // app.use("/api", routes);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 app.use("/auth", authRoutes);
