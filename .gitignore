@@ -108,3 +108,6 @@ temp/
 uploads/
 public/uploads/
 static/uploads/
+
+github_actions_key
+github_actions_key.pub
